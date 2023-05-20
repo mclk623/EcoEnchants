@@ -9,8 +9,12 @@ import com.willfp.ecoenchants.config.RarityYml
 import com.willfp.ecoenchants.config.TargetsYml
 import com.willfp.ecoenchants.config.TypesYml
 import com.willfp.ecoenchants.config.VanillaEnchantsYml
+import com.willfp.ecoenchants.display.DisplayCache
 import com.willfp.ecoenchants.display.EnchantDisplay
+import com.willfp.ecoenchants.display.EnchantSorter
+import com.willfp.ecoenchants.enchants.EcoEnchantLevel
 import com.willfp.ecoenchants.enchants.EcoEnchants
+import com.willfp.ecoenchants.enchants.EnchantGUI
 import com.willfp.ecoenchants.enchants.LoreConversion
 import com.willfp.ecoenchants.enchants.registerVanillaEnchants
 import com.willfp.ecoenchants.integrations.EnchantRegistrations
@@ -18,13 +22,16 @@ import com.willfp.ecoenchants.integrations.plugins.CMIIntegration
 import com.willfp.ecoenchants.integrations.plugins.EssentialsIntegration
 import com.willfp.ecoenchants.mechanics.AnvilSupport
 import com.willfp.ecoenchants.mechanics.EnchantingTableSupport
+import com.willfp.ecoenchants.mechanics.ExtraItemSupport
 import com.willfp.ecoenchants.mechanics.GrindstoneSupport
 import com.willfp.ecoenchants.mechanics.LootSupport
 import com.willfp.ecoenchants.mechanics.VillagerSupport
 import com.willfp.ecoenchants.target.EnchantLookup.clearEnchantCache
 import com.willfp.ecoenchants.target.EnchantLookup.heldEnchantLevels
+import com.willfp.libreforge.NamedValue
 import com.willfp.libreforge.loader.LibreforgePlugin
 import com.willfp.libreforge.loader.configs.ConfigCategory
+import com.willfp.libreforge.registerHolderPlaceholderProvider
 import com.willfp.libreforge.registerHolderProvider
 import com.willfp.libreforge.registerPlayerRefreshFunction
 import org.bukkit.event.Listener
@@ -50,6 +57,12 @@ class EcoEnchantsPlugin : LibreforgePlugin() {
     override fun handleEnable() {
         registerHolderProvider { it.heldEnchantLevels }
         registerPlayerRefreshFunction { it.clearEnchantCache() }
+        registerHolderPlaceholderProvider { (holder, _) ->
+            when (holder) {
+                is EcoEnchantLevel -> listOf(NamedValue("level", holder.level))
+                else -> emptyList()
+            }
+        }
     }
 
     override fun handleAfterLoad() {
@@ -58,6 +71,11 @@ class EcoEnchantsPlugin : LibreforgePlugin() {
 
     override fun handleReload() {
         registerVanillaEnchants(this)
+
+        DisplayCache.reload()
+        EnchantSorter.reload(this)
+        ExtraItemSupport.reload(this)
+        EnchantGUI.reload(this)
     }
 
     override fun loadListeners(): List<Listener> {

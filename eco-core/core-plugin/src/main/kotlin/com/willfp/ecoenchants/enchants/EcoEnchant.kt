@@ -8,6 +8,8 @@ import com.willfp.eco.core.config.interfaces.Config
 import com.willfp.eco.core.config.readConfig
 import com.willfp.eco.core.fast.fast
 import com.willfp.eco.core.placeholder.PlayerStaticPlaceholder
+import com.willfp.eco.core.placeholder.context.PlaceholderContext
+import com.willfp.eco.core.placeholder.templates.SimpleInjectablePlaceholder
 import com.willfp.eco.util.StringUtils
 import com.willfp.eco.util.containsIgnoreCase
 import com.willfp.ecoenchants.EcoEnchantsPlugin
@@ -122,10 +124,10 @@ abstract class EcoEnchant(
         checkDependencies()
 
         config.injectPlaceholders(
-            PlayerStaticPlaceholder(
-                "level"
-            ) { p ->
-                p.getEnchantLevel(this).toString()
+            object : SimpleInjectablePlaceholder("level") {
+                override fun getValue(args: String, context: PlaceholderContext): String? {
+                    return context.itemStack?.fast()?.getEnchantmentLevel(this@EcoEnchant)?.toString()
+                }
             }
         )
 
