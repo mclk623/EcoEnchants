@@ -4,6 +4,7 @@ import com.willfp.eco.core.command.impl.PluginCommand
 import com.willfp.eco.core.display.DisplayModule
 import com.willfp.eco.core.integrations.IntegrationLoader
 import com.willfp.ecoenchants.commands.CommandEcoEnchants
+import com.willfp.ecoenchants.commands.CommandEnchant
 import com.willfp.ecoenchants.commands.CommandEnchantInfo
 import com.willfp.ecoenchants.config.RarityYml
 import com.willfp.ecoenchants.config.TargetsYml
@@ -27,13 +28,17 @@ import com.willfp.ecoenchants.mechanics.GrindstoneSupport
 import com.willfp.ecoenchants.mechanics.LootSupport
 import com.willfp.ecoenchants.mechanics.VillagerSupport
 import com.willfp.ecoenchants.target.EnchantLookup.clearEnchantCache
+import com.willfp.ecoenchants.target.EnchantLookup.getActiveEnchantLevel
 import com.willfp.ecoenchants.target.EnchantLookup.heldEnchantLevels
+import com.willfp.libreforge.EmptyProvidedHolder.holder
 import com.willfp.libreforge.NamedValue
+import com.willfp.libreforge.ProvidedHolder
 import com.willfp.libreforge.loader.LibreforgePlugin
 import com.willfp.libreforge.loader.configs.ConfigCategory
 import com.willfp.libreforge.registerHolderPlaceholderProvider
 import com.willfp.libreforge.registerHolderProvider
 import com.willfp.libreforge.registerPlayerRefreshFunction
+import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 
 class EcoEnchantsPlugin : LibreforgePlugin() {
@@ -57,11 +62,11 @@ class EcoEnchantsPlugin : LibreforgePlugin() {
     override fun handleEnable() {
         registerHolderProvider { it.heldEnchantLevels }
         registerPlayerRefreshFunction { it.clearEnchantCache() }
-        registerHolderPlaceholderProvider { (holder, _) ->
-            when (holder) {
-                is EcoEnchantLevel -> listOf(NamedValue("level", holder.level))
-                else -> emptyList()
-            }
+        registerHolderPlaceholderProvider<EcoEnchantLevel> { it, player ->
+            listOf(
+                NamedValue("level", it.level),
+                NamedValue("active_level", player.getActiveEnchantLevel(it.enchant))
+            )
         }
     }
 
@@ -99,7 +104,8 @@ class EcoEnchantsPlugin : LibreforgePlugin() {
     override fun loadPluginCommands(): List<PluginCommand> {
         return listOf(
             CommandEcoEnchants(this),
-            CommandEnchantInfo(this)
+            CommandEnchantInfo(this),
+            CommandEnchant(this)
         )
     }
 
