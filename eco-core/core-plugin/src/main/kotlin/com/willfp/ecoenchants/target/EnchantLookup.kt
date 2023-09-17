@@ -3,12 +3,13 @@ package com.willfp.ecoenchants.target
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.willfp.eco.core.fast.fast
 import com.willfp.eco.core.items.HashedItem
+import com.willfp.ecoenchants.EcoEnchantsPlugin
 import com.willfp.ecoenchants.enchants.EcoEnchant
 import com.willfp.ecoenchants.enchants.EcoEnchantLevel
 import com.willfp.ecoenchants.enchants.FoundEcoEnchantLevel
-import com.willfp.ecoenchants.target.EnchantLookup.getEnchantLevel
 import com.willfp.libreforge.ItemProvidedHolder
-import com.willfp.libreforge.ProvidedHolder
+import com.willfp.libreforge.slot.SlotType
+import com.willfp.libreforge.slot.SlotTypes
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import java.util.concurrent.TimeUnit
@@ -18,11 +19,11 @@ typealias SlotProvider = (Player) -> Map<ItemInNumericSlot, ItemInSlot>
 
 data class ItemInSlot internal constructor(
     val item: ItemStack,
-    val slot: Collection<TargetSlot>
+    val slot: Collection<SlotType>
 ) {
     constructor(
         item: ItemStack,
-        slot: TargetSlot
+        slot: SlotType
     ) : this(item, listOf(slot))
 }
 
@@ -307,13 +308,17 @@ object EnchantLookup {
 
             // This is such a fucking disgusting way of implementing %active_level%,
             // and it's probably quite slow too.
-            return found.map {
-                val level = it.holder as EcoEnchantLevel
+            return if (EcoEnchantsPlugin.instance.configYml.getBool("extra-placeholders.active-level")) {
+                found.map {
+                    val level = it.holder as EcoEnchantLevel
 
-                ItemProvidedHolder(
-                    FoundEcoEnchantLevel(level, this.getActiveEnchantLevel(level.enchant)),
-                    it.provider
-                )
+                    ItemProvidedHolder(
+                        FoundEcoEnchantLevel(level, this.getActiveEnchantLevel(level.enchant)),
+                        it.provider
+                    )
+                }
+            } else {
+                found
             }
         }
 
@@ -327,7 +332,7 @@ object EnchantLookup {
     }
 
     init {
-        fun createProvider(slot: TargetSlot): SlotProvider {
+        fun createProvider(slot: SlotType): SlotProvider {
             return { player: Player ->
                 val found = mutableMapOf<ItemInNumericSlot, ItemInSlot>()
 
@@ -342,7 +347,7 @@ object EnchantLookup {
             }
         }
 
-        for (slot in TargetSlot.values()) {
+        for (slot in SlotTypes.values()) {
             registerProvider(createProvider(slot))
         }
     }
