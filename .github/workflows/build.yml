@@ -16,8 +16,6 @@ jobs:
           distribution: 'temurin'
           java-version: 17
           cache: 'gradle'
-      - name: submodules-init
-        uses: snickerbockers/submodules-init@v4
       - name: Build with Gradle
         run: ./gradlew build
 
